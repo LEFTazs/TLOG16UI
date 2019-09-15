@@ -1,0 +1,6 @@
+nbproject/
+.bowerrc
+bower.json
+Gruntfile.js
+gulpfile.js
+package.json

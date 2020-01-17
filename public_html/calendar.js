@@ -57,35 +57,6 @@ function drawCalendar(year, month) {
     }); 
 }
 
-function getCalendarHtml(calendarDays) {
-    var calendarHtml = "";
-    
-    var disableDay = true;
-    for (var week = 0; week < calendarDays.length / 7; week++) {
-        calendarHtml += "<tr>";
-        for (var weekDay = 0; weekDay < 7; weekDay++) {
-            var calendarDay = calendarDays[weekDay + week * 7];
-            
-            if (calendarDay === 1)
-                disableDay = !disableDay;
-            
-            var workingHours = 240;
-            
-            if (disableDay) {
-                calendarHtml += "<td></td>"
-            } else {
-                calendarHtml += '<td class="btn-default" data-toggle="modal" data-target="#modalWorkdayAdder"><h3>' + calendarDays[weekDay + week * 7] + '</h3>';
-                calendarHtml += '<br><div class="text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
-                calendarHtml += '<div class="text-left" title="Go to Task list view"><span class="btn-default glyphicon glyphicon-list-alt"></span></div>';
-                calendarHtml += '</td>';
-            }
-        }
-        calendarHtml += "</tr>";
-    }
-    
-    return calendarHtml;
-}
-
 function getCalendarDays(year, month) {
     var calendarDays = [];
 
@@ -106,6 +77,49 @@ function getCalendarDays(year, month) {
     }
 
     return calendarDays;
+}
+
+function getCalendarHtml(calendarDays) {
+    var calendarHtml = "";
+    
+    var disableDay = true;
+    for (var week = 0; week < calendarDays.length / 7; week++) {
+        calendarHtml += "<tr>";
+        for (var weekDay = 0; weekDay < 7; weekDay++) {
+            var calendarDay = calendarDays[weekDay + week * 7];
+            
+            if (calendarDay === 1)
+                disableDay = !disableDay;
+                        
+            if (disableDay) {
+                calendarHtml += "<td></td>";
+            } else {
+                calendarDate = calendarDays[weekDay + week * 7];
+                if (isWorkday(currentDate, calendarDate)) {
+                    calendarHtml += '<td onclick="window.location=\'task-list.html\';" class="btn-default"><h3>' + calendarDate + '</h3>';
+                    var workingHours = getWorkdayHours(currentDate, calendarDate);
+                    calendarHtml += '<br><div class="text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
+                } else {
+                    calendarHtml += '<td class="btn-default" data-toggle="modal" data-target="#modalWorkdayAdder"><h3>' + calendarDate + '</h3>';
+                }
+                calendarHtml += '</td>';
+            }
+        }
+        calendarHtml += "</tr>";
+    }
+    
+    return calendarHtml;
+}
+
+function isWorkday(date, day) {
+    // TODO: get data from backend
+    
+    return true;
+}
+
+function getWorkdayHours(date, day) {
+    //TODO: get data from backend
+    return 240;
 }
 
 function daysInMonth(year, month) {

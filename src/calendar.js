@@ -29,7 +29,7 @@ function assignMonthChooserPaginationEvents() {
 
 function drawMonthChooserPagination() {
     $("#month-chooser").empty();
-    $("#month-chooser").append('<li id="last-month-button"><a href="#">Előző hónap</a></li>');
+    $("#month-chooser").append('<li id="last-month-button"><a href="#">Last month</a></li>');
     for (var month = 1; month <= 12; month++) {
         var monthMenuCode = '<li class="choose-month-button';
         if (currentDate.getMonth() + 1 === month)
@@ -38,7 +38,7 @@ function drawMonthChooserPagination() {
                 
         $("#month-chooser").append(monthMenuCode);
     }
-    $("#month-chooser").append('<li id="next-month-button"><a href="#">Következő hónap</a></li>');
+    $("#month-chooser").append('<li id="next-month-button"><a href="#">Next month</a></li>');
 }
 
 function drawCalendarDate(date) {

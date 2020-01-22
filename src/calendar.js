@@ -1,5 +1,5 @@
 var currentDate = new Date();
-var currentWorkingDays = getWorkdaysFromBackend(currentDate);
+var currentWorkingDays = [];
 
 window.onload = initalizePage();
 

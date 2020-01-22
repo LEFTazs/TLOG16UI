@@ -1,6 +1,10 @@
 var currentDate = new Date();
+var currentWorkingDays = getWorkdaysFromBackend(currentDate);
 
-window.onload = function (event) {
+window.onload = initalizePage();
+
+function initalizePage() {
+    currentWorkingDays = getWorkdaysFromBackend(currentDate);
     drawPage();
 }
 
@@ -41,13 +45,15 @@ function drawMonthChooserPagination() {
     $("#month-chooser").append('<li id="next-month-button"><a href="#">Next month</a></li>');
 }
 
+
+
 function drawCalendarDate(date) {
     var currentYear = date.getFullYear();
     var currentMonth = date.getMonth() + 1;
-    drawCalendar(currentYear, currentMonth);
+    drawCalendarDateHtml(currentYear, currentMonth);
 }
 
-function drawCalendar(year, month) {
+function drawCalendarDateHtml(year, month) {
     var calendarDays = getCalendarDays(year, month);
     calendarHtml = getCalendarHtml(calendarDays);
 
@@ -78,6 +84,17 @@ function getCalendarDays(year, month) {
 
     return calendarDays;
 }
+function daysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+}
+function dayOfWeek(year, month, day) {
+    var westernDayOfWeek = new Date(year, month, day).getDay();
+    if (westernDayOfWeek == 0)
+        return 7;
+    else
+        return westernDayOfWeek;
+}
+
 
 function getCalendarHtml(calendarDays) {
     var calendarHtml = "";
@@ -96,11 +113,12 @@ function getCalendarHtml(calendarDays) {
             } else {
                 calendarDate = calendarDays[weekDay + week * 7];
                 if (isWorkday(currentDate, calendarDate)) {
-                    calendarHtml += '<td onclick="window.location=\'task-list.html\';" class="btn-default"><h3>' + calendarDate + '</h3>';
+                    calendarHtml += '<td onclick="window.location=\'task-list.html\';" class="btn-default"><h2>' + calendarDate + '</h2>';
                     var workingHours = getWorkdayHours(currentDate, calendarDate);
-                    calendarHtml += '<br><div class="text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
+                    var minuteClass = workingHours >= 0 ? "nonNegativeMinutes" : "negativeMinutes"; 
+                    calendarHtml += '<br><div class="' + minuteClass + ' text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
                 } else {
-                    calendarHtml += '<td class="btn-default" data-toggle="modal" data-target="#modalWorkdayAdder"><h3>' + calendarDate + '</h3>';
+                    calendarHtml += '<td class="btn-default" data-toggle="modal" data-target="#modalWorkdayAdder"><h3><i>' + calendarDate + '</i></h3>';
                 }
                 calendarHtml += '</td>';
             }
@@ -110,26 +128,78 @@ function getCalendarHtml(calendarDays) {
     
     return calendarHtml;
 }
-
 function isWorkday(date, day) {
-    // TODO: get data from backend
+    var year = date.getFullYear();
+    var month = date.getMonth();
+    var searchDay = new Date(year, month, day);
+    for (var i in currentWorkingDays) {
+        var actualDay = new Date(currentWorkingDays[i].actualDay);
+        if (actualDay.toDateString() === searchDay.toDateString()) {
+            return true;
+        }
+    }
     
-    return true;
+    return false;
 }
-
 function getWorkdayHours(date, day) {
-    //TODO: get data from backend
-    return 240;
+    var year = date.getFullYear();
+    var month = date.getMonth();
+    var searchDay = new Date(year, month, day);
+    for (var i in currentWorkingDays) {
+        var actualDay = new Date(currentWorkingDays[i].actualDay);
+        if (actualDay.toDateString() === searchDay.toDateString()) {
+            return currentWorkingDays[i].extraMinPerDay;
+        }
+    }
+    return null;
 }
 
-function daysInMonth(year, month) {
-    return new Date(year, month, 0).getDate();
+
+
+function getWorkdaysFromBackend(date) {
+    var currentYear = date.getFullYear();
+    var currentMonth = date.getMonth() + 1;
+    var endpoint = "timelogger/workmonths/" + currentYear + "/" + currentMonth;
+    return backendGet(endpoint);
 }
 
-function dayOfWeek(year, month, day) {
-    var westernDayOfWeek = new Date(year, month, day).getDay();
-    if (westernDayOfWeek == 0)
-        return 7;
-    else
-        return westernDayOfWeek;
+
+function backendGet(endpoint){
+    var url = "http://" + window.location.host + "/tlog-backend/" + endpoint;
+
+    var response = null;
+    $.ajax({
+        type : "GET",
+        url : url,
+        async: false,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(result) {
+            console.log("GET is done.");
+            response = result;
+        },
+        error : function(e) {
+          console.log("ERROR: ", e);
+        }
+    });
+    return response;
+}
+
+function backendPost(endpoint, json) {
+    var url = "http://" + window.location.host + "/tlog-backend/" + endpoint;
+    
+    $.ajax({
+        type: "POST",
+        url: url,
+        // The key needs to match your method's input parameter (case-sensitive).
+        data: json,//JSON.stringify({ Markers: markers }),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data){
+            console.log(data);
+        },
+        failure: function(errMsg) {
+            console.log(errMsg);
+        }
+    });
 }

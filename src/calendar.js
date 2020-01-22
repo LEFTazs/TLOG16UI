@@ -1,7 +1,7 @@
 var currentDate = new Date();
 var currentWorkingDays = [];
 
-window.onload = initalizePage();
+window.onload = initalizePage;
 
 function initalizePage() {
     currentWorkingDays = getWorkdaysFromBackend(currentDate);
@@ -17,16 +17,16 @@ function drawPage() {
 function assignMonthChooserPaginationEvents() {
     $("#last-month-button").click(function(){
         currentDate.setMonth(currentDate.getMonth() - 1);
-        drawPage();
+        initalizePage();
     });
     $(".choose-month-button").click(function(){
         var chosenMonth = parseInt($(this).text());
         currentDate.setMonth(chosenMonth-1);
-        drawPage();
+        initalizePage();
     }); 
     $("#next-month-button").click(function(){
         currentDate.setMonth(currentDate.getMonth() + 1);
-        drawPage();
+        initalizePage();
     }); 
 }
 

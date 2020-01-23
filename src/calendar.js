@@ -1,23 +1,29 @@
-var currentDate = new Date();
-var currentWorkingDays = [];
+var chosenCalendarDate = new Date();
+var currentWorkingMonth;
+var chosenCalendarDay;
 
 window.onload = initalizePage;
 
 function initalizePage() {
-    currentWorkingDays = getWorkdaysFromBackend(currentDate);
+    currentWorkingMonth = getWorkmonthFromBackend(chosenCalendarDate);
+    console.log(currentWorkingMonth);
     chosenCalendarDay = -1;
     drawPage();
+    assignAllEvents();
 }
 
 function drawPage() {
     drawMonthChooserPagination();
-    drawCalendarDate(currentDate);
+    drawCalendarDate(chosenCalendarDate);
+    drawStatistics();
+}
+
+function assignAllEvents() {
     assignMonthChooserPaginationEvents();
     assignModalEvents();
     assignCalendarButtonEvents();
 }
 
-var chosenCalendarDay;
 
 function assignCalendarButtonEvents() {
     $(document).off('click', '.nonWorkDayButton');
@@ -31,9 +37,6 @@ function assignCalendarButtonEvents() {
         chosenCalendarDay = $(this).text();
         window.location = 'task-list.html';
     });
-
-
-
 }
 
 function assignModalEvents() {
@@ -41,7 +44,7 @@ function assignModalEvents() {
     $('#modalWorkdayAdder').submit(function(e) {
         e.preventDefault();
         
-        var workdayDate = new Date(currentDate);
+        var workdayDate = new Date(chosenCalendarDate);
         workdayDate.setDate(chosenCalendarDay);
         var workingHours = parseInt($('#workingHours').val());
         
@@ -56,18 +59,18 @@ function assignModalEvents() {
 function assignMonthChooserPaginationEvents() {
     $("#last-month-button").off("click");
     $("#last-month-button").click(function(){
-        currentDate.setMonth(currentDate.getMonth() - 1);
+        chosenCalendarDate.setMonth(chosenCalendarDate.getMonth() - 1);
         initalizePage();
     });
     $(".choose-month-button").off("click");
     $(".choose-month-button").click(function(){
         var chosenMonth = parseInt($(this).text());
-        currentDate.setMonth(chosenMonth-1);
+        chosenCalendarDate.setMonth(chosenMonth-1);
         initalizePage();
     });
     $("#next-month-button").off("click");
     $("#next-month-button").click(function(){
-        currentDate.setMonth(currentDate.getMonth() + 1);
+        chosenCalendarDate.setMonth(chosenCalendarDate.getMonth() + 1);
         initalizePage();
     }); 
 }
@@ -78,13 +81,31 @@ function drawMonthChooserPagination() {
     $("#month-chooser").append('<li id="last-month-button"><a href="#">Last month</a></li>');
     for (var month = 1; month <= 12; month++) {
         var monthMenuCode = '<li class="choose-month-button';
-        if (currentDate.getMonth() + 1 === month)
+        if (chosenCalendarDate.getMonth() + 1 === month)
             monthMenuCode += ' active';
         monthMenuCode += '"><a href="#">' + month + '</a></li>';
                 
         $("#month-chooser").append(monthMenuCode);
     }
     $("#month-chooser").append('<li id="next-month-button"><a href="#">Next month</a></li>');
+}
+
+
+function drawStatistics() {
+    var allMinutes = currentWorkingMonth.sumPerMonth;
+    $('#allMinutesStatistic').empty();
+    $('#allMinutesStatistic').append(allMinutes);
+    
+    var requiredMinutes = currentWorkingMonth.requiredMinPerMonth;
+    $('#requiredMinutesStatistic').empty();
+    $('#requiredMinutesStatistic').append(requiredMinutes);
+    
+    var extraMinutes = currentWorkingMonth.extraMinPerMonth;
+    $('#extraMinutesStatistic').empty();
+    $('#extraMinutesStatistic').append(extraMinutes);
+    
+    var className = (extraMinutes < 0) ? "negativeMinutes" : "nonNegativeMinutes";
+    $('#extraMinutesStatistic').attr("class", className);
 }
 
 
@@ -153,14 +174,17 @@ function getCalendarHtml(calendarDays) {
             if (disableDay) {
                 calendarHtml += "<td></td>";
             } else {
-                var calendarDate = calendarDays[weekDay + week * 7];
-                if (isWorkday(currentDate, calendarDate)) {
-                    calendarHtml += '<td class="workDayButton btn-default"><h2>' + calendarDate + '</h2>';
-                    var workingHours = getWorkdayHours(currentDate, calendarDate);
+                var dayIterator = calendarDays[weekDay + week * 7];
+                var calendarDate = new Date(chosenCalendarDate.getFullYear(), 
+                                    chosenCalendarDate.getMonth(),
+                                    dayIterator);
+                if (isWorkday(calendarDate)) {
+                    calendarHtml += '<td class="workDayButton btn-default"><h2>' + dayIterator + '</h2>';
+                    var workingHours = getWorkdayHours(calendarDate);
                     var minuteClass = workingHours >= 0 ? "nonNegativeMinutes" : "negativeMinutes"; 
                     calendarHtml += '<br><div class="' + minuteClass + ' text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
                 } else {
-                    calendarHtml += '<td class="nonWorkDayButton btn-default"><h3><i>' + calendarDate + '</i></h3>';
+                    calendarHtml += '<td class="nonWorkDayButton btn-default"><h3><i>' + dayIterator + '</i></h3>';
                 }
                 calendarHtml += '</td>';
             }
@@ -170,27 +194,21 @@ function getCalendarHtml(calendarDays) {
     
     return calendarHtml;
 }
-function isWorkday(date, day) {
-    var year = date.getFullYear();
-    var month = date.getMonth();
-    var searchDay = new Date(year, month, day);
-    for (var i in currentWorkingDays) {
-        var actualDay = new Date(currentWorkingDays[i].actualDay);
-        if (actualDay.toDateString() === searchDay.toDateString()) {
+function isWorkday(date) {
+    for (var i in currentWorkingMonth.days) {
+        var actualDay = new Date(currentWorkingMonth.days[i].actualDay);
+        if (actualDay.toDateString() === date.toDateString()) {
             return true;
         }
     }
     
     return false;
 }
-function getWorkdayHours(date, day) {
-    var year = date.getFullYear();
-    var month = date.getMonth();
-    var searchDay = new Date(year, month, day);
-    for (var i in currentWorkingDays) {
-        var actualDay = new Date(currentWorkingDays[i].actualDay);
-        if (actualDay.toDateString() === searchDay.toDateString()) {
-            return currentWorkingDays[i].extraMinPerDay;
+function getWorkdayHours(date) {
+    for (var i in currentWorkingMonth.days) {
+        var actualDay = new Date(currentWorkingMonth.days[i].actualDay);
+        if (actualDay.toDateString() === date.toDateString()) {
+            return currentWorkingMonth.days[i].extraMinPerDay;
         }
     }
     return null;
@@ -215,6 +233,24 @@ function getWorkdaysFromBackend(date) {
     var currentMonth = date.getMonth() + 1;
     var endpoint = "timelogger/workmonths/" + currentYear + "/" + currentMonth;
     return backendGet(endpoint);
+}
+
+function getWorkmonthFromBackend(date) {
+    var endpoint = "timelogger/workmonths/";
+    
+    var allWorkMonths = backendGet(endpoint);
+    
+    for (var i in allWorkMonths) {
+        var checkDate = new Date(allWorkMonths[i].dateString);
+        if (isYearAndMonthEqual(checkDate, date)) {
+            return allWorkMonths[i];
+        }
+    }
+    return null;
+}
+function isYearAndMonthEqual(date1, date2) {
+    return date1.getFullYear() === date2.getFullYear() &&
+                date1.getMonth() === date2.getMonth();
 }
 
 

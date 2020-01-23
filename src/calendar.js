@@ -5,6 +5,7 @@ window.onload = initalizePage;
 
 function initalizePage() {
     currentWorkingDays = getWorkdaysFromBackend(currentDate);
+    chosenCalendarDay = -1;
     drawPage();
 }
 
@@ -12,18 +13,59 @@ function drawPage() {
     drawMonthChooserPagination();
     drawCalendarDate(currentDate);
     assignMonthChooserPaginationEvents();
+    assignModalEvents();
+    assignCalendarButtonEvents();
+}
+
+var chosenCalendarDay;
+
+function assignCalendarButtonEvents() {
+    $(document).off('click', '.nonWorkDayButton');
+    $(document).on('click', '.nonWorkDayButton', function () {
+        chosenCalendarDay = $(this).text();
+        $('#modalWorkdayAdder').modal('toggle');
+    });
+    
+    $(document).off('click', '.workDayButton');
+    $(document).on('click', '.workDayButton', function () {
+        chosenCalendarDay = $(this).text();
+        window.location = 'task-list.html';
+    });
+
+
+
+}
+
+function assignModalEvents() {
+    $('#modalWorkdayAdder').off("submit");
+    $('#modalWorkdayAdder').submit(function(e) {
+        e.preventDefault();
+        
+        var workdayDate = new Date(currentDate);
+        workdayDate.setDate(chosenCalendarDay);
+        var workingHours = parseInt($('#workingHours').val());
+        
+        postWorkdayToBackend(workdayDate, workingHours);
+        
+        $('#modalWorkdayAdder').modal('toggle');
+                
+        initalizePage();
+    });
 }
 
 function assignMonthChooserPaginationEvents() {
+    $("#last-month-button").off("click");
     $("#last-month-button").click(function(){
         currentDate.setMonth(currentDate.getMonth() - 1);
         initalizePage();
     });
+    $(".choose-month-button").off("click");
     $(".choose-month-button").click(function(){
         var chosenMonth = parseInt($(this).text());
         currentDate.setMonth(chosenMonth-1);
         initalizePage();
-    }); 
+    });
+    $("#next-month-button").off("click");
     $("#next-month-button").click(function(){
         currentDate.setMonth(currentDate.getMonth() + 1);
         initalizePage();
@@ -111,14 +153,14 @@ function getCalendarHtml(calendarDays) {
             if (disableDay) {
                 calendarHtml += "<td></td>";
             } else {
-                calendarDate = calendarDays[weekDay + week * 7];
+                var calendarDate = calendarDays[weekDay + week * 7];
                 if (isWorkday(currentDate, calendarDate)) {
-                    calendarHtml += '<td onclick="window.location=\'task-list.html\';" class="btn-default"><h2>' + calendarDate + '</h2>';
+                    calendarHtml += '<td class="workDayButton btn-default"><h2>' + calendarDate + '</h2>';
                     var workingHours = getWorkdayHours(currentDate, calendarDate);
                     var minuteClass = workingHours >= 0 ? "nonNegativeMinutes" : "negativeMinutes"; 
                     calendarHtml += '<br><div class="' + minuteClass + ' text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
                 } else {
-                    calendarHtml += '<td class="btn-default" data-toggle="modal" data-target="#modalWorkdayAdder"><h3><i>' + calendarDate + '</i></h3>';
+                    calendarHtml += '<td class="nonWorkDayButton btn-default"><h3><i>' + calendarDate + '</i></h3>';
                 }
                 calendarHtml += '</td>';
             }
@@ -155,6 +197,18 @@ function getWorkdayHours(date, day) {
 }
 
 
+function postWorkdayToBackend(date, workingHours) {
+    var currentYear = date.getFullYear();
+    var currentMonth = date.getMonth() + 1;
+    var currentDay = date.getDate();
+    
+    var jsonData = JSON.stringify({ year: currentYear, 
+        month: currentMonth, 
+        day: currentDay, 
+        requiredHours: workingHours });
+        
+    backendPost("timelogger/workmonths/workdays", jsonData);
+}
 
 function getWorkdaysFromBackend(date) {
     var currentYear = date.getFullYear();
@@ -187,19 +241,19 @@ function backendGet(endpoint){
 
 function backendPost(endpoint, json) {
     var url = "http://" + window.location.host + "/tlog-backend/" + endpoint;
-    
+
     $.ajax({
         type: "POST",
         url: url,
-        // The key needs to match your method's input parameter (case-sensitive).
-        data: json,//JSON.stringify({ Markers: markers }),
+        async: false,
+        data: json,
         contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function(data){
-            console.log(data);
+        success: function(result) {
+            console.log("POST is done.")
+            console.log(result);
         },
-        failure: function(errMsg) {
-            console.log(errMsg);
+        error: function(e) {
+            console.log("ERROR: ", e);
         }
     });
 }

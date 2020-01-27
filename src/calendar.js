@@ -1,13 +1,11 @@
 var chosenCalendarDate = new Date();
 var currentWorkingMonth;
-var chosenCalendarDay;
+var chosenCalendarDay = -1;
 
 window.onload = initalizePage;
 
 function initalizePage() {
     currentWorkingMonth = getWorkmonthFromBackend(chosenCalendarDate);
-    console.log(currentWorkingMonth);
-    chosenCalendarDay = -1;
     drawPage();
     assignAllEvents();
 }
@@ -20,7 +18,8 @@ function drawPage() {
 
 function assignAllEvents() {
     assignMonthChooserPaginationEvents();
-    assignModalEvents();
+    assignWorkdayAdderModalEvents();
+    assignConfirmWeekendModalEvents();
     assignCalendarButtonEvents();
 }
 
@@ -39,7 +38,7 @@ function assignCalendarButtonEvents() {
     });
 }
 
-function assignModalEvents() {
+function assignWorkdayAdderModalEvents() {
     $('#modalWorkdayAdder').off("submit");
     $('#modalWorkdayAdder').submit(function(e) {
         e.preventDefault();
@@ -51,6 +50,23 @@ function assignModalEvents() {
         postWorkdayToBackend(workdayDate, workingHours);
         
         $('#modalWorkdayAdder').modal('toggle');
+                
+        initalizePage();
+    });
+}
+
+function assignConfirmWeekendModalEvents() {
+    $('#modalConfirmWeekend').off("submit");
+    $('#modalConfirmWeekend').submit(function(e) {
+        e.preventDefault();
+        
+        var workdayDate = new Date(chosenCalendarDate);
+        workdayDate.setDate(chosenCalendarDay);
+        var workingHours = parseInt($('#workingHours').val());
+        
+        postWeekendWorkdayToBackend(workdayDate, workingHours);
+        
+        $('#modalConfirmWeekend').modal('toggle');
                 
         initalizePage();
     });
@@ -215,7 +231,17 @@ function getWorkdayHours(date) {
 }
 
 
-function postWorkdayToBackend(date, workingHours) {
+function postWorkdayToBackend(date, workingHours) {    
+    var jsonData = convertWorkdayToJson(date, workingHours);
+    backendPost("timelogger/workmonths/workdays", jsonData);
+}
+
+function postWeekendWorkdayToBackend(date, workingHours) {
+    var jsonData = convertWorkdayToJson(date, workingHours);
+    backendPost("timelogger/workmonths/weekendworkdays", jsonData);
+}
+
+function convertWorkdayToJson(date, workingHours) {
     var currentYear = date.getFullYear();
     var currentMonth = date.getMonth() + 1;
     var currentDay = date.getDate();
@@ -224,8 +250,8 @@ function postWorkdayToBackend(date, workingHours) {
         month: currentMonth, 
         day: currentDay, 
         requiredHours: workingHours });
-        
-    backendPost("timelogger/workmonths/workdays", jsonData);
+    
+    return jsonData;
 }
 
 function getWorkdaysFromBackend(date) {
@@ -239,6 +265,7 @@ function getWorkmonthFromBackend(date) {
     var endpoint = "timelogger/workmonths/";
     
     var allWorkMonths = backendGet(endpoint);
+    console.log(allWorkMonths);
     
     for (var i in allWorkMonths) {
         var checkDate = new Date(allWorkMonths[i].dateString);
@@ -265,11 +292,11 @@ function backendGet(endpoint){
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function(result) {
-            console.log("GET is done.");
             response = result;
         },
         error : function(e) {
-          console.log("ERROR: ", e);
+            var exceptionId = parseInt(e.responseText);
+            handleEndpointException(exceptionId);
         }
     });
     return response;
@@ -278,6 +305,7 @@ function backendGet(endpoint){
 function backendPost(endpoint, json) {
     var url = "http://" + window.location.host + "/tlog-backend/" + endpoint;
 
+    var response = null;
     $.ajax({
         type: "POST",
         url: url,
@@ -285,11 +313,37 @@ function backendPost(endpoint, json) {
         data: json,
         contentType: "application/json; charset=utf-8",
         success: function(result) {
-            console.log("POST is done.")
-            console.log(result);
+            response = result;
         },
         error: function(e) {
-            console.log("ERROR: ", e);
+            handleEndpointException(e);
         }
     });
+    return response;
 }
+
+function handleEndpointException(exception) {
+    var id = parseInt(exception.responseText);
+
+    switch (id) {
+        case WEEKEND_NOT_ENABLED_EXCEPTION:
+            $('#modalConfirmWeekend').modal('toggle');
+            break;
+        case FUTURE_WORK_EXCEPTION:
+            $('#errorInformationText').empty();
+            $('#errorInformationText').append("The chosen day is in the future.<br>");
+            $('#errorInformationText').append("Please choose another day.");
+            $('#modalErrorInformation').modal('toggle');
+            break;
+        default:
+            $('#errorInformationText').empty();
+            $('#errorInformationText').append("Unknown error.<br>");
+            $('#errorInformationText').append("Status code: " + exception.status + "<br>");
+            $('#errorInformationText').append("Error id: " + id);
+            $('#modalErrorInformation').modal('toggle');
+            break;
+    }
+}
+
+const WEEKEND_NOT_ENABLED_EXCEPTION = 1;
+const FUTURE_WORK_EXCEPTION = 2;

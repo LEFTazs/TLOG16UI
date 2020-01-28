@@ -5,6 +5,7 @@ var chosenCalendarDay = -1;
 window.onload = initalizePage;
 
 function initalizePage() {
+    getWorkdaysFromBackend(chosenCalendarDate);  //We create the workmonth this way
     currentWorkingMonth = getWorkmonthFromBackend(chosenCalendarDate);
     drawPage();
     assignAllEvents();
@@ -265,7 +266,6 @@ function getWorkmonthFromBackend(date) {
     var endpoint = "timelogger/workmonths/";
     
     var allWorkMonths = backendGet(endpoint);
-    console.log(allWorkMonths);
     
     for (var i in allWorkMonths) {
         var checkDate = new Date(allWorkMonths[i].dateString);

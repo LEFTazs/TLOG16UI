@@ -3,11 +3,10 @@
         <title>TimeLogger - Task list</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>        
         <script src="../node_modules/jquery/dist/jquery.min.js"></script>
-        <script src="calendar.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>        
+        <script src="task-list.js"></script>
     </head>
     <body>
         
@@ -52,27 +51,10 @@
                             <th>Start Time</th>
                             <th>End Time</th>
                             <th>Length of Task (minutes)</th>
-                            <th>Edit</th>
+                            <th colspan="2">Edit</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr> 
-                            <td>4214</td>
-                            <td>this is a comment</td>
-                            <td>10:12</td>
-                            <td>16:10</td>
-                            <td>321</td>
-                            <td>TODO: buttons here</td>
-                        </tr>
-                        <tr> 
-                            <td>5321</td>
-                            <td>this is another comment</td>
-                            <td>09:12</td>
-                            <td>20:10</td>
-                            <td>643</td>
-                            <td>TODO: buttons here</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="taskList"></tbody>
                 </table>
             </div>
             <div class="col-sm-1"></div>
@@ -88,6 +70,109 @@
         </div>
         <br>
         
+        <!-- TASK ADDER MODAL -->
+        <div id="modalTaskAdder" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Add new task</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form action="">
+                            <div class="form-group">
+                                <label for="adderTaskId">Task Id: </label>
+                                <input type="text" class="form-control" id="adderTaskId">
+                                <label for="adderComment">Comment: </label>
+                                <input type="text" class="form-control" id="adderComment">
+                                <label for="adderStartTime">Start time: </label>
+                                <input type="time" class="form-control" id="adderStartTime">
+                                <label for="adderEndTime">End time: </label>
+                                <input type="time" class="form-control" id="adderEndTime">
+                            </div>
+                            <button id="taskAdderButton" type="submit" class="btn btn-default">Add</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TASK MODIFYING MODAL -->
+        <div id="modalTaskModifier" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Modify chosen task</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form action="">
+                            <div class="form-group">
+                                <label for="modifierOldTaskId">Old task Id: </label>
+                                <input type="text" class="form-control" id="modifierOldTaskId" readonly>
+                                <label for="modifierOldStartTime">Old start time: </label>
+                                <input type="time" class="form-control" id="modifierOldStartTime" readonly>
+                                <label for="modifierNewTaskId">Task Id: </label>
+                                <input type="text" class="form-control" id="modifierNewTaskId">
+                                <label for="modifierNewComment">Comment: </label>
+                                <input type="text" class="form-control" id="modifierNewComment">
+                                <label for="modifierNewStartTime">Start time: </label>
+                                <input type="time" class="form-control" id="modifierNewStartTime">
+                                <label for="modifierNewEndTime">End time: </label>
+                                <input type="time" class="form-control" id="modifierNewEndTime">
+                            </div>
+                            <button id="taskModifierButton" type="submit" class="btn btn-default">Modify</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TASK DELETER MODAL -->
+        <div id="modalTaskDeleter" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Delete chosen task</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form action="">
+                            <div class="form-group">
+                                <label for="deleteTaskId">Task Id: </label>
+                                <input type="text" class="form-control" id="deleteTaskId" readonly>
+                                <label for="deleteStartTime">Start time: </label>
+                                <input type="time" class="form-control" id="deleteStartTime" readonly>
+                            </div>
+                            <button id="taskDeleterButton" type="submit" class="btn btn-default">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ERROR INFORMATION MODAL -->
+        <div id="modalErrorInformation" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">An error has occured</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form action="">
+                            <p id="errorInformationText"></p>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- DAY STATISTICS -->
         <div class="row">
             <div class="col-sm-3"></div>
@@ -95,8 +180,9 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">Daily statistics</div>
                     <div class="panel-body">
-                        <b>Work hours:</b> 124<br>
-                        <b>Something else:</b> 35235
+                        <b>All minutes: </b><i id="allMinutesStatistic"></i><br>
+                        <b>Required minutes: </b><i id="requiredMinutesStatistic"></i><br>
+                        <b>Extra minutes: </b><i id="extraMinutesStatistic"></i>
                     </div>
                 </div>
             </div>

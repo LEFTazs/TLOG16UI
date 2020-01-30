@@ -28,13 +28,16 @@ function assignAllEvents() {
 function assignCalendarButtonEvents() {
     $(document).off('click', '.nonWorkDayButton');
     $(document).on('click', '.nonWorkDayButton', function () {
-        chosenCalendarDay = $(this).text();
+        chosenCalendarDay = $(this).children(".dateText").text();
         $('#modalWorkdayAdder').modal('toggle');
     });
     
     $(document).off('click', '.workDayButton');
     $(document).on('click', '.workDayButton', function () {
-        chosenCalendarDay = $(this).text();
+        chosenCalendarDay = $(this).children(".dateText").text();
+        var clickedDate = new Date(chosenCalendarDate);
+        clickedDate.setDate(chosenCalendarDay);
+        document.cookie = "taskdate=" + clickedDate.toDateString() + ";";
         window.location = 'task-list.html';
     });
 }
@@ -196,12 +199,12 @@ function getCalendarHtml(calendarDays) {
                                     chosenCalendarDate.getMonth(),
                                     dayIterator);
                 if (isWorkday(calendarDate)) {
-                    calendarHtml += '<td class="workDayButton btn-default"><h2>' + dayIterator + '</h2>';
+                    calendarHtml += '<td class="workDayButton btn-default"><h2 class="dateText">' + dayIterator + '</h2>';
                     var workingHours = getWorkdayHours(calendarDate);
                     var minuteClass = workingHours >= 0 ? "nonNegativeMinutes" : "negativeMinutes"; 
                     calendarHtml += '<br><div class="' + minuteClass + ' text-right" title="Extra minutes">' + workingHours + ' <span class="glyphicon glyphicon-time"></span></div>';
                 } else {
-                    calendarHtml += '<td class="nonWorkDayButton btn-default"><h3><i>' + dayIterator + '</i></h3>';
+                    calendarHtml += '<td class="nonWorkDayButton btn-default"><h3 class="dateText"><i>' + dayIterator + '</i></h3>';
                 }
                 calendarHtml += '</td>';
             }

@@ -1,9 +1,10 @@
-var chosenCalendarDate = new Date(2020, 0, 1); //TODO: get this from caller
+var chosenCalendarDate;
 var currentWorkday;
 
 window.onload = initalizePage;
 
 function initalizePage() {
+    chosenCalendarDate = new Date(getCookie("taskdate"));
     currentWorkday = getWorkdayFromBackend(chosenCalendarDate);
     console.log(currentWorkday);
     
@@ -249,3 +250,19 @@ function getWorkdayFromBackend(date) {
     }
     return null;
 }
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+} 

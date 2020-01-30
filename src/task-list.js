@@ -37,11 +37,16 @@ function drawTaskListTable() {
         var length = allTasks[i].minPerTask;
         
         $('#taskList').append("<tr></tr>");
-        $('#taskList tr:last').append("<td>" + taskId + "</td>");
-        $('#taskList tr:last').append("<td>" + comment + "</td>");
-        $('#taskList tr:last').append("<td>" + startTime + "</td>");
-        $('#taskList tr:last').append("<td>" + endTime + "</td>");
-        $('#taskList tr:last').append("<td>" + length + "</td>");
+        $('#taskList tr:last').append("<td></td>")
+        $('#taskList tr:last td:last').text(taskId);
+        $('#taskList tr:last').append("<td></td>")
+        $('#taskList tr:last td:last').text(comment);
+        $('#taskList tr:last').append("<td></td>")
+        $('#taskList tr:last td:last').text(startTime);
+        $('#taskList tr:last').append("<td></td>")
+        $('#taskList tr:last td:last').text(endTime);
+        $('#taskList tr:last').append("<td></td>")
+        $('#taskList tr:last td:last').text(length);
         $('#taskList tr:last').append('<td class="modifyButton btn-default" data-rownum="' + i + '">Modify</td>' +
                                 '<td class="deleteButton btn-default" data-rownum="' + i + '">Delete</td>');
     }
